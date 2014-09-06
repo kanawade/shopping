@@ -2,6 +2,7 @@
 <beans xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security.xsd" xmlns="http://www.springframework.org/schema/beans" xmlns:security="http://www.springframework.org/schema/security" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <security:global-method-security pre-post-annotations="enabled"/>
     <security:http auto-config="false" use-expressions="true" entry-point-ref="WMSecAuthEntryPoint" disable-url-rewriting="true">
+        <security:intercept-url pattern="/services/mydb/**" access="permitAll"/>
         <security:intercept-url pattern="/services/hrdb/**" access="permitAll"/>
         <security:intercept-url pattern="/app.variables.json" access="isAuthenticated()"/>
         <security:intercept-url pattern="/pages/topnav/**" access="isAuthenticated()"/>
@@ -32,7 +33,7 @@
     <bean class="org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter" id="WMSecAuthFilter">
         <property name="authenticationSuccessHandler" ref="successHandler"/>
         <property name="authenticationFailureHandler" ref="failureHandler"/>
-        <property name="authenticationManager" ref="authenticationManagerDemo"/>
+        <property name="authenticationManager" ref="authenticationManagerLDAP"/>
         <property name="filterProcessesUrl" value="/j_spring_security_check"/>
     </bean>
     <bean class="com.wavemaker.runtime.security.WMAuthenticationEntryPoint" id="WMSecAuthEntryPoint">
@@ -58,26 +59,45 @@
             </security:user-service>
         </security:authentication-provider>
     </security:authentication-manager>
-    <security:authentication-manager id="authenticationManagerDemo" alias="authenticationManagerDemo">
-        <security:authentication-provider>
-            <security:user-service>
-                <security:user name="user" password="user" authorities="ROLE_user"/>
-                <security:user name="admin" password="admin" authorities="ROLE_admin"/>
-            </security:user-service>
-        </security:authentication-provider>
+    <security:ldap-server url="ldap://ec2-54-87-2-36.compute-1.amazonaws.com:389"/>
+    <security:authentication-manager id="authenticationManagerLDAP" alias="authenticationManagerLDAP">
+        <security:ldap-authentication-provider user-search-filter="(cn={0},dc=ec2,dc=internal)" group-search-base="#{null}" user-dn-pattern="cn={0},dc=ec2,dc=internal" role-prefix="ROLE_"/>
     </security:authentication-manager>
-    <bean class="com.wavemaker.runtime.security.SecurityService" scope="singleton" id="securityService">
-        <property name="rolePrefix">
-            <value>ROLE_</value>
-        </property>
-        <property name="noRolesMarkerRole">
-            <value>DEFAULT_NO_ROLES</value>
-        </property>
-        <property name="roles">
-            <list>
-                <value>admin</value>
-                <value>user</value>
-            </list>
-        </property>
+    <security:authentication-manager id="authenticationManagerLDAPwithDB" alias="authenticationManagerLDAPwithDB">
+        <security:authentication-provider ref="ldapAuthProvider"/>
+    </security:authentication-manager>
+    <bean class="org.springframework.security.ldap.DefaultSpringSecurityContextSource" id="contextSource">
+        <constructor-arg value="ldap://ec2-54-87-2-36.compute-1.amazonaws.com:389"/>
+    </bean>
+    <bean class="org.springframework.security.ldap.authentication.LdapAuthenticationProvider" id="ldapAuthProvider">
+        <constructor-arg>
+            <bean class="org.springframework.security.ldap.authentication.BindAuthenticator">
+                <constructor-arg ref="contextSource"/>
+                <property name="userSearch">
+                    <bean class="org.springframework.security.ldap.search.FilterBasedLdapUserSearch" id="userSearch">
+                        <constructor-arg index="0" value=""/>
+                        <constructor-arg index="1" value="(cn={0},dc=ec2,dc=internal)"/>
+                        <constructor-arg index="2" ref="contextSource"/>
+                    </bean>
+                </property>
+                <property name="userDnPatterns">
+                    <value>cn={0},dc=ec2,dc=internal</value>
+                </property>
+            </bean>
+        </constructor-arg>
+        <constructor-arg>
+            <bean class="com.wavemaker.runtime.security.LdapAuthoritiesPopulator" id="LdapAuthoritiesPopulator">
+                <constructor-arg ref="contextSource"/>
+                <constructor-arg>
+                    <value/>
+                </constructor-arg>
+                <property name="groupSearchDisabled">
+                    <value>true</value>
+                </property>
+                <property name="roleProvider">
+                    <value/>
+                </property>
+            </bean>
+        </constructor-arg>
     </bean>
 </beans>
