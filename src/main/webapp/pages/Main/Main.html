@@ -1,0 +1,19 @@
+<wm-page layouttype="three-column" columns="3" data-ng-controller="MainPageController" name="mainpage">
+    <wm-header content="header" name="header" height="auto"></wm-header>
+    <wm-top-nav name="top-nav" content="topnav"></wm-top-nav>
+    <wm-content name="content">
+        <wm-row name="contentRow">
+            <wm-left-panel contentwidth="2" name="leftpanel" content="leftnav"></wm-left-panel>
+            <wm-column class="app-content-column" columnwidth="8" paddingleft="15" paddingright="15" name="mainContent">
+                <wm-label caption="Home" fontsize="20" name="Heading"></wm-label>
+                <wm-html height="auto" width="100%" name="bodyContent">
+                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum porta gravida nisi, ac volutpat nibh adipiscing et. Fusce hendrerit nisi sed augue molestie pellentesque. Proin quis leo condimentum, tempus augue sit amet, aliquet
+                        erat.
+                    </p>
+                </wm-html>
+            </wm-column>
+            <wm-right-panel contentwidth="2" name="rightpanel" content="rightnav"></wm-right-panel>
+        </wm-row>
+    </wm-content>
+    <wm-footer name="footer" content="footer"></wm-footer>
+</wm-page>
