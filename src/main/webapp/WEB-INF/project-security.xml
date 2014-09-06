@@ -1,19 +1,83 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
-<!-- This is a Studio Managed File. If you customize this file by hand, use 
-	of Studio Security tooling may revert your customizations -->
-
-<beans xmlns="http://www.springframework.org/schema/beans"
-    xmlns:security="http://www.springframework.org/schema/security"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://www.springframework.org/schema/beans 
-                    http://www.springframework.org/schema/beans/spring-beans.xsd
-                    http://www.springframework.org/schema/security 
-                    http://www.springframework.org/schema/security/spring-security.xsd">
-
-  <security:global-method-security pre-post-annotations="enabled" />
-                    
-  <security:http auto-config="true" security="none" >
-  </security:http>
-                          
-</beans> 
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<beans xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security.xsd" xmlns="http://www.springframework.org/schema/beans" xmlns:security="http://www.springframework.org/schema/security" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <security:global-method-security pre-post-annotations="enabled"/>
+    <security:http auto-config="false" use-expressions="true" entry-point-ref="WMSecAuthEntryPoint" disable-url-rewriting="true">
+        <security:intercept-url pattern="/services/hrdb/**" access="permitAll"/>
+        <security:intercept-url pattern="/app.variables.json" access="isAuthenticated()"/>
+        <security:intercept-url pattern="/pages/topnav/**" access="isAuthenticated()"/>
+        <security:intercept-url pattern="/pages/rightnav/**" access="isAuthenticated()"/>
+        <security:intercept-url pattern="/pages/leftnav/**" access="isAuthenticated()"/>
+        <security:intercept-url pattern="/pages/header/**" access="isAuthenticated()"/>
+        <security:intercept-url pattern="/pages/footer/**" access="isAuthenticated()"/>
+        <security:intercept-url pattern="/pages/Main/**" access="isAuthenticated()"/>
+        <security:intercept-url pattern="/**/*" requires-channel="http"/>
+        <security:intercept-url pattern="/index.html" access="isAuthenticated()"/>
+        <security:custom-filter position="FORM_LOGIN_FILTER" ref="WMSecAuthFilter"/>
+        <security:intercept-url pattern="/app.css" access="permitAll"/>
+        <security:intercept-url pattern="/config.js" access="permitAll"/>
+        <security:intercept-url pattern="/config.json" access="permitAll"/>
+        <security:intercept-url pattern="/app.js" access="permitAll"/>
+        <security:intercept-url pattern="/types.js" access="permitAll"/>
+        <security:intercept-url pattern="/login.html" access="permitAll"/>
+        <security:intercept-url pattern="/pages/Login/**" access="permitAll"/>
+        <security:intercept-url pattern="/pages/Common/**" access="permitAll"/>
+        <security:intercept-url pattern="/themes/**" access="permitAll"/>
+        <security:intercept-url pattern="/resources/**" access="permitAll"/>
+        <security:intercept-url pattern="/**/app/build/application/**" access="permitAll"/>
+        <security:intercept-url pattern="/j_spring_security_check" access="permitAll"/>
+        <security:intercept-url pattern="/securityService.json" access="permitAll"/>
+        <security:intercept-url pattern="/" access="isAuthenticated()"/>
+        <security:intercept-url pattern="/**" access="isAuthenticated()"/>
+    </security:http>
+    <bean class="org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter" id="WMSecAuthFilter">
+        <property name="authenticationSuccessHandler" ref="successHandler"/>
+        <property name="authenticationFailureHandler" ref="failureHandler"/>
+        <property name="authenticationManager" ref="authenticationManagerDemo"/>
+        <property name="filterProcessesUrl" value="/j_spring_security_check"/>
+    </bean>
+    <bean class="com.wavemaker.runtime.security.WMAuthenticationEntryPoint" id="WMSecAuthEntryPoint">
+        <property name="loginFormUrl" value="/login.html"/>
+    </bean>
+    <bean class="com.wavemaker.runtime.security.WMAuthenticationSuccessHandler" id="successHandler">
+        <property name="redirectStrategy" ref="hashAwareRedirectStrategy"/>
+    </bean>
+    <bean class="com.wavemaker.runtime.security.WMAuthenticationFailureHandler" id="failureHandler"/>
+    <bean class="com.wavemaker.runtime.security.WMHashAwareRedirectStrategy" id="hashAwareRedirectStrategy"/>
+    <bean class="com.wavemaker.runtime.security.WMSecurityConfigStore" id="WMSecurityConfigStore">
+        <property name="enforceSecurity">
+            <value>true</value>
+        </property>
+        <property name="enforceIndexHtml">
+            <value>true</value>
+        </property>
+    </bean>
+    <security:authentication-manager>
+        <security:authentication-provider>
+            <security:user-service>
+                <security:user name="dummy" password="dummy" authorities="ROLE_dummy"/>
+            </security:user-service>
+        </security:authentication-provider>
+    </security:authentication-manager>
+    <security:authentication-manager id="authenticationManagerDemo" alias="authenticationManagerDemo">
+        <security:authentication-provider>
+            <security:user-service>
+                <security:user name="user" password="user" authorities="ROLE_user"/>
+                <security:user name="admin" password="admin" authorities="ROLE_admin"/>
+            </security:user-service>
+        </security:authentication-provider>
+    </security:authentication-manager>
+    <bean class="com.wavemaker.runtime.security.SecurityService" scope="singleton" id="securityService">
+        <property name="rolePrefix">
+            <value>ROLE_</value>
+        </property>
+        <property name="noRolesMarkerRole">
+            <value>DEFAULT_NO_ROLES</value>
+        </property>
+        <property name="roles">
+            <list>
+                <value>admin</value>
+                <value>user</value>
+            </list>
+        </property>
+    </bean>
+</beans>
